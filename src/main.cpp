@@ -3,79 +3,62 @@
 
 namespace stdx = std::experimental;
 
-template <typename _Tp, int _Np>
-void print_simd(stdx::fixed_size_simd<_Tp, _Np>* data) {
-    for (size_t i = 0; i < data->size(); i++) {
-        std::cout<<(*data)[i]<<" ";
-    }
-    std::cout<<std::endl;
-}
-
 template <typename _Tp, int R, int C>
 class Matrix {
     public:
-    std::vector<stdx::fixed_size_simd<_Tp, C>> data;
+    std::vector<std::vector<_Tp>> data;
 
     Matrix(_Tp value) {
-        std::vector<stdx::fixed_size_simd<_Tp, C>> vec;
+        std::vector<std::vector<_Tp>> vec;
         for (int r = 0; r < R; r++) {
-            vec.push_back(stdx::fixed_size_simd<_Tp, C>(value));
+            vec.push_back(std::vector(C, value));
         }
         this->data = vec;
     }
 
     Matrix(_Tp* inc_value) {
-        std::vector<stdx::fixed_size_simd<_Tp, C>> vec;
+        std::vector<std::vector<_Tp>> vec;
         _Tp acc{};
-        _Tp* acc_ptr = &acc;
         for (int r = 0; r < R; r++) {
-            vec.push_back(stdx::fixed_size_simd<_Tp, C>([acc_ptr, inc_value](int _) { (*acc_ptr) += *inc_value; return *acc_ptr; }));
+            std::vector<_Tp> inner;
+            for (int c = 0; c < C; c++) {
+                acc += *inc_value;
+                inner.push_back(acc);
+            }
+            vec.push_back(inner);
         }
         this->data = vec;
     }
 
-    Matrix(std::vector<stdx::fixed_size_simd<_Tp, C>> vec) {
+    Matrix(std::vector<std::vector<_Tp>> vec) {
         this->data = vec;
     }
 
     void print() const {
         for (auto row: this->data) {
-            print_simd(&row);
+            for (size_t i = 0; i < row.size(); i++) {
+                std::cout<<row[i]<<" ";
+            }
+            std::cout<<std::endl;
         }
     }
 
     
     template <int _R, int _C>
     static Matrix<_Tp, _C, _R> transpose(const Matrix<_Tp, _R, _C>& matrix) {
-        std::vector<std::vector<_Tp>> vec; // .len=_R, [0].len=_C
-        
-        // Convert to vector
-        for (int r = 0; r < _R; r++) {
-            alignas(stdx::memory_alignment_v<stdx::fixed_size_simd<_Tp, _C>>)
-            std::array<_Tp, stdx::fixed_size_simd<_Tp, _C>::size()> mem = {};
-            matrix.data[r].copy_to(&mem[0], stdx::vector_aligned);
-            vec.push_back(std::vector(mem.begin(), mem.end()));
-        }
-
         // Do the transpose
         std::vector<std::vector<_Tp>> transpose(_C, std::vector<int>(_R));
 
-        int rows = vec.size();
-        int cols = vec[0].size();
+        int rows = matrix.data.size();
+        int cols = matrix.data[0].size();
 
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
-                transpose[j][i] = vec[i][j];
+                transpose[j][i] = matrix.data[i][j];
             }
         }
 
-        // Back into simd
-        std::vector<stdx::fixed_size_simd<_Tp, _R>> transpose_mat;
-        for (std::vector<_Tp> row: transpose) {
-            transpose_mat.push_back(stdx::fixed_size_simd<_Tp, _R>(row.data(), stdx::element_aligned));
-        }     
-
-        return Matrix<_Tp, _C, _R>(transpose_mat);
+        return Matrix<_Tp, _C, _R>(transpose);
     }
 
     template <int R2>
@@ -86,12 +69,12 @@ class Matrix {
 
     template <int R2>
     Matrix<_Tp, R, R2> matmul_pre_T(const Matrix<_Tp, R2, C>& other_T) {
-        std::vector<stdx::fixed_size_simd<_Tp, R2>> vec;
+        std::vector<std::vector<_Tp>> vec;
         for (int r1 = 0; r1 < R; r1++) { // R of ours
             _Tp* res = new _Tp[R2];
             for (int r2 = 0; r2 < R2; r2++) { // R of other
                 // Do the mul here
-                stdx::fixed_size_simd<_Tp, C> tmp = this->data[r1] * other_T.data[r2];
+                stdx::fixed_size_simd<_Tp, C> tmp = stdx::fixed_size_simd<_Tp, C>(this->data[r1].data(), stdx::element_aligned) * stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(), stdx::element_aligned);
                 
                 /// Sum
                 res[r2] = _Tp(); // Default
@@ -100,10 +83,7 @@ class Matrix {
                     res[r2] += data;
                 }
             }
-            // Generate the row
-            stdx::fixed_size_simd<_Tp, R2> simd(res, stdx::element_aligned);
-            delete res;
-            vec.push_back(simd);
+            vec.push_back(std::vector<_Tp>(res, res+R2));
         }
         return Matrix<_Tp, R, R2>(vec);
     }
