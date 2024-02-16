@@ -81,19 +81,28 @@ class Matrix {
     template <int R2>
     Matrix<_Tp, R, R2> matmul(const Matrix<_Tp, C, R2>& other) {
         const Matrix<_Tp, R2, C> other_T = transpose(other);
+        return this->matmul_pre_T(other_T);
+    }
+
+    template <int R2>
+    Matrix<_Tp, R, R2> matmul_pre_T(const Matrix<_Tp, R2, C>& other_T) {
         std::vector<stdx::fixed_size_simd<_Tp, R2>> vec;
         for (int r1 = 0; r1 < R; r1++) { // R of ours
             _Tp* res = new _Tp[R2];
             for (int r2 = 0; r2 < R2; r2++) { // R of other
+                // Do the mul here
                 stdx::fixed_size_simd<_Tp, C> tmp = this->data[r1] * other_T.data[r2];
                 
-                res[r2] = _Tp();
+                /// Sum
+                res[r2] = _Tp(); // Default
                 for (std::size_t i = 0; i < tmp.size(); i++) {
                     const auto& data = tmp[i];
                     res[r2] += data;
                 }
             }
+            // Generate the row
             stdx::fixed_size_simd<_Tp, R2> simd(res, stdx::element_aligned);
+            delete res;
             vec.push_back(simd);
         }
         return Matrix<_Tp, R, R2>(vec);
@@ -106,10 +115,10 @@ int main(int argc, char **argv) {
     std::cout<<"A:"<<std::endl;
     a.print();
     std::cout<<std::endl;
-    Matrix<int, 3, 4> b(&inc_val);
+    Matrix<int, 4, 3> b(&inc_val);
     std::cout<<"B:"<<std::endl;
     b.print();
     std::cout<<std::endl;
-    auto res = a.matmul(b);
+    auto res = a.matmul_pre_T(b);
     res.print();
 }
