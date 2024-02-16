@@ -5,3 +5,4 @@ CMakeFiles
 Makefile
 deltaobj
 build
+simd_matmul
