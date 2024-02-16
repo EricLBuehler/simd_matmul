@@ -49,7 +49,8 @@ class SlowMatrix {
     }
 
     template <int _R, int _C>
-    static SlowMatrix<_Tp, _C, _R> transpose(const SlowMatrix<_Tp, _R, _C>& matrix) {
+    static SlowMatrix<_Tp, _C, _R> transpose(
+        const SlowMatrix<_Tp, _R, _C>& matrix) {
         // Do the transpose
         std::array<std::array<_Tp, _R>, _C>* transpose =
             new std::array<std::array<_Tp, _R>, _C>{};
@@ -93,11 +94,8 @@ class SlowMatrix {
         return SlowMatrix<_Tp, R, R2>(arr);
     }
 
-    ~SlowMatrix() {
-        delete this->data;
-    }
+    ~SlowMatrix() { delete this->data; }
 };
-
 
 template <typename _Tp, int R, int C>
 class Matrix {
@@ -107,7 +105,8 @@ class Matrix {
     Matrix(SlowMatrix<_Tp, R, C>& from) {
         std::array<stdx::fixed_size_simd<_Tp, C>, R>* arr =
             new std::array<stdx::fixed_size_simd<_Tp, C>, R>{};
-        for (typename std::array<std::array<_Tp, C>, R>::size_type i = 0; i < from.data->size(); i++) {
+        for (typename std::array<std::array<_Tp, C>, R>::size_type i = 0;
+             i < from.data->size(); i++) {
             stdx::fixed_size_simd<_Tp, C> row_simd;
             std::array<_Tp, C>& row = (*from.data)[i];
             row_simd.copy_from(&row[0], stdx::element_aligned);
@@ -124,7 +123,8 @@ class Matrix {
         for (int r1 = 0; r1 < R; r1++) {       // R of ours
             for (int r2 = 0; r2 < R2; r2++) {  // R of other
                 // Do the mul here
-                stdx::fixed_size_simd<_Tp, C> tmp = (*this->data)[r1] * (*other_T.data)[r2];
+                stdx::fixed_size_simd<_Tp, C> tmp =
+                    (*this->data)[r1] * (*other_T.data)[r2];
 
                 (*arr)[r1][r2] =
                     stdx::parallelism_v2::reduce(tmp, std::plus<>());
@@ -142,9 +142,7 @@ class Matrix {
         }
     }
 
-    ~Matrix() {
-        delete this->data;
-    }
+    ~Matrix() { delete this->data; }
 };
 
 template <size_t R, size_t C, size_t K>
@@ -181,7 +179,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < TIMES; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        for (int j = 0; j<100; j++){
+        for (int j = 0; j < 100; j++) {
             a.matmul_pre_T(b);
         }
 
@@ -193,14 +191,16 @@ int main(int argc, char** argv) {
     std::cout << "SIMDATMUL Execution time: " << total_time / TIMES
               << " microseconds" << std::endl;
 
-    std::array<std::array<int, WIDTH>, ROWS>* mat1 = new std::array<std::array<int, WIDTH>, ROWS>{};
-    std::array<std::array<int, COLS>, WIDTH>* mat2 = new std::array<std::array<int, COLS>, WIDTH>{};
+    std::array<std::array<int, WIDTH>, ROWS>* mat1 =
+        new std::array<std::array<int, WIDTH>, ROWS>{};
+    std::array<std::array<int, COLS>, WIDTH>* mat2 =
+        new std::array<std::array<int, COLS>, WIDTH>{};
 
     int64_t total_time2 = 0;
     for (int i = 0; i < TIMES; i++) {
         auto start2 = std::chrono::high_resolution_clock::now();
 
-        for (int j = 0; j<100; j++){
+        for (int j = 0; j < 100; j++) {
             multiplyMatrices(mat1, mat2);
         }
 
