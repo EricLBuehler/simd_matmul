@@ -113,10 +113,10 @@ std::array<std::array<int, K>, R> multiplyMatrices(
 }
 
 int main(int argc, char** argv) {
-    auto start = std::chrono::high_resolution_clock::now();
-
     Matrix<int, 2000, 3> a;
     Matrix<int, 40, 3> b;
+    auto start = std::chrono::high_resolution_clock::now();
+
     auto res = a.matmul_pre_T(b);
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -125,10 +125,10 @@ int main(int argc, char** argv) {
     std::cout << "SIMDATMUL Execution time: " << duration.count()
               << " microseconds" << std::endl;
 
-    auto start2 = std::chrono::high_resolution_clock::now();
-
     std::array<std::array<int, 3>, 2000> mat1;
     std::array<std::array<int, 40>, 3> mat2;
+    auto start2 = std::chrono::high_resolution_clock::now();
+
     auto res2 = multiplyMatrices(mat1, mat2);
 
     auto end2 = std::chrono::high_resolution_clock::now();
