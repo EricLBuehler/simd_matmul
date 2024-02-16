@@ -7,15 +7,17 @@ namespace stdx = std::experimental;
 template <typename _Tp, int R, int C>
 class Matrix {
    public:
-    std::array<std::array<_Tp, C>, R> data;
+    std::array<std::array<_Tp, C>, R>* data;
 
     Matrix() {
-        std::array<std::array<_Tp, C>, R> arr{};
+        std::array<std::array<_Tp, C>, R>* arr =
+            new std::array<std::array<_Tp, C>, R>{};
         this->data = arr;
     }
 
     Matrix(_Tp value) {
-        std::vector<std::vector<_Tp>> vec;
+        std::vector<std::vector<_Tp>>* vec =
+            new std::vector<std::vector<_Tp>>{};
         for (int r = 0; r < R; r++) {
             vec.push_back(std::vector(C, value));
         }
@@ -23,7 +25,8 @@ class Matrix {
     }
 
     Matrix(_Tp* inc_value) {
-        std::array<std::array<_Tp, C>, R> arr;
+        std::array<std::array<_Tp, C>, R>* arr =
+            new std::array<std::array<_Tp, C>, R>{};
         _Tp acc{};
         for (int r = 0; r < R; r++) {
             for (int c = 0; c < C; c++) {
@@ -34,7 +37,7 @@ class Matrix {
         this->data = arr;
     }
 
-    Matrix(std::array<std::array<_Tp, C>, R> data) { this->data = data; }
+    Matrix(std::array<std::array<_Tp, C>, R>* data) { this->data = data; }
 
     void print() const {
         for (auto row : this->data) {
@@ -48,7 +51,8 @@ class Matrix {
     template <int _R, int _C>
     static Matrix<_Tp, _C, _R> transpose(const Matrix<_Tp, _R, _C>& matrix) {
         // Do the transpose
-        std::array<std::array<_Tp, _R>, _C> transpose;
+        std::array<std::array<_Tp, _R>, _C>* transpose =
+            new std::array<std::array<_Tp, _R>, _C>{};
 
         int rows = matrix.data.size();
         int cols = matrix.data[0].size();
@@ -70,17 +74,20 @@ class Matrix {
 
     template <int R2>
     Matrix<_Tp, R, R2> matmul_pre_T(const Matrix<_Tp, R2, C>& other_T) {
-        std::array<std::array<_Tp, R2>, R> arr;
+        std::array<std::array<_Tp, R2>, R>* arr =
+            new std::array<std::array<_Tp, R2>, R>{};
         for (int r1 = 0; r1 < R; r1++) {       // R of ours
             for (int r2 = 0; r2 < R2; r2++) {  // R of other
                 // Do the mul here
-                stdx::fixed_size_simd<_Tp, C> tmp =
-                    stdx::fixed_size_simd<_Tp, C>(this->data[r1].data(),
-                                                  stdx::element_aligned) *
-                    stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(),
-                                                  stdx::element_aligned);
+                stdx::fixed_size_simd<_Tp, C> left;
+                left.copy_from(&this->data[r1][0], stdx::element_aligned);
 
-                arr[r1][r2] = stdx::parallelism_v2::reduce(tmp, std::plus<>());
+                stdx::fixed_size_simd<_Tp, C> right;
+                right.copy_from(&other_T.data[r2][0], stdx::element_aligned);
+                stdx::fixed_size_simd<_Tp, C> tmp = left * right;
+
+                (*arr)[r1][r2] =
+                    stdx::parallelism_v2::reduce(tmp, std::plus<>());
             }
         }
         return Matrix<_Tp, R, R2>(arr);
@@ -110,34 +117,34 @@ int main(int argc, char** argv) {
     Matrix<int, 2000, 3> a;
     Matrix<int, 40, 3> b;
 
-    int64_t total_time=0;
-    for (int i=0; i<1000; i++) {
+    int64_t total_time = 0;
+    for (int i = 0; i < 1000; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        auto res = a.matmul_pre_T(b);
+        a.matmul_pre_T(b);
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         total_time += duration.count();
     }
-    std::cout << "SIMDATMUL Execution time: " << total_time/1000
+    std::cout << "SIMDATMUL Execution time: " << total_time / 1000
               << " microseconds" << std::endl;
 
     std::array<std::array<int, 3>, 2000> mat1;
     std::array<std::array<int, 40>, 3> mat2;
 
-    int64_t total_time2=0;
-    for (int i=0; i<1000; i++) {
+    int64_t total_time2 = 0;
+    for (int i = 0; i < 1000; i++) {
         auto start2 = std::chrono::high_resolution_clock::now();
 
-        auto res2 = multiplyMatrices(mat1, mat2);
+        multiplyMatrices(mat1, mat2);
 
         auto end2 = std::chrono::high_resolution_clock::now();
-        auto duration2 =
-            std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+        auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(
+            end2 - start2);
         total_time2 += duration2.count();
     }
-    std::cout << "Normal Execution time: " << total_time2/1000
+    std::cout << "Normal Execution time: " << total_time2 / 1000
               << " microseconds" << std::endl;
 }
