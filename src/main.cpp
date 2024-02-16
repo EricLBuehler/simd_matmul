@@ -1,5 +1,6 @@
 #include <iostream>
 #include <experimental/simd>
+#include <chrono>
 
 namespace stdx = std::experimental;
 
@@ -7,6 +8,11 @@ template <typename _Tp, int R, int C>
 class Matrix {
     public:
     std::array<std::array<_Tp, C>, R> data;
+
+    Matrix() {
+        std::array<std::array<_Tp, C>, R> data;
+        this->data = data;
+    }
 
     Matrix(_Tp value) {
         std::vector<std::vector<_Tp>> vec;
@@ -106,19 +112,23 @@ std::array<std::array<int, K>, R> multiplyMatrices(
 }
 
 int main(int argc, char **argv) {
-    int inc_val = 1;
-    Matrix<int, 2000, 3> a(&inc_val);
-    /*std::cout<<"A:"<<std::endl;
-    a.print();
-    std::cout<<std::endl;*/
-    Matrix<int, 40, 3> b(&inc_val);
-    /*std::cout<<"B:"<<std::endl;
-    b.print();
-    std::cout<<std::endl;*/
-    auto res = a.matmul_pre_T(b);
-    //res.print();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    /*std::array<std::array<int, 3>, 2000> mat1;
+    Matrix<int, 2000, 3> a;
+    Matrix<int, 40, 3> b;
+    auto res = a.matmul_pre_T(b);
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "SIMDATMUL Execution time: " << duration.count() << " microseconds" << std::endl;
+
+    auto start2 = std::chrono::high_resolution_clock::now();
+
+    std::array<std::array<int, 3>, 2000> mat1;
     std::array<std::array<int, 40>, 3> mat2;
-    auto res2 = multiplyMatrices(mat1, mat2);*/
+    auto res2 = multiplyMatrices(mat1, mat2);
+    
+    auto end2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    std::cout << "Normal Execution time: " << duration2.count() << " microseconds" << std::endl;
 }
