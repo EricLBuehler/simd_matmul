@@ -80,13 +80,7 @@ class Matrix {
                     stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(),
                                                   stdx::element_aligned);
 
-                /// Sum
-                _Tp acc{};  // Default
-                for (std::size_t i = 0; i < tmp.size(); i++) {
-                    const auto& data = tmp[i];
-                    acc += data;
-                }
-                arr[r1][r2] = acc;
+                arr[r1][r2] = stdx::parallelism_v2::reduce(tmp, std::plus<>());
             }
         }
         return Matrix<_Tp, R, R2>(arr);
