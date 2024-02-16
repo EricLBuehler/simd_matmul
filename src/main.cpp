@@ -181,7 +181,9 @@ int main(int argc, char** argv) {
     for (int i = 0; i < TIMES; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        a.matmul_pre_T(b);
+        for (int j = 0; j<100; j++){
+            a.matmul_pre_T(b);
+        }
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration =
@@ -198,7 +200,9 @@ int main(int argc, char** argv) {
     for (int i = 0; i < TIMES; i++) {
         auto start2 = std::chrono::high_resolution_clock::now();
 
-        multiplyMatrices(mat1, mat2);
+        for (int j = 0; j<100; j++){
+            multiplyMatrices(mat1, mat2);
+        }
 
         auto end2 = std::chrono::high_resolution_clock::now();
         auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(
