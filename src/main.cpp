@@ -1,56 +1,64 @@
-#include <cassert>
-#include <fstream>
 #include <iostream>
+#include <experimental/simd>
 
-struct Data {
-    int value;
-};
+namespace stdx = std::experimental;
 
-#pragma pack(1)
-struct Other {
-    int value;
-    bool other;
-};
-
-template <typename T>
-bool is_type(void *pool, void *ptr) {
-    return ((uintptr_t)ptr % alignof(T)) == ((uintptr_t)pool % alignof(T));
+template <typename _Tp, int _Np>
+void print_simd(stdx::fixed_size_simd<_Tp, _Np>* data) {
+    for (size_t i = 0; i < data->size(); i++) {
+        std::cout<<(*data)[i]<<" ";
+    }
+    std::cout<<std::endl;
 }
 
+template <typename _Tp, int R, int C>
+class Matrix {
+    private:
+    std::vector<stdx::fixed_size_simd<_Tp, C>> data;
+
+    public:
+    Matrix(_Tp value) {
+        std::vector<stdx::fixed_size_simd<_Tp, C>> vec;
+        for (int r = 0; r < R; r++) {
+            vec.push_back(stdx::fixed_size_simd<_Tp, C>(value));
+        }
+        this->data = vec;
+    }
+
+    Matrix(std::vector<stdx::fixed_size_simd<_Tp, C>> vec) {
+        this->data = vec;
+    }
+
+    void print() {
+        for (auto row: this->data) {
+            print_simd(&row);
+        }
+    }
+
+    template <int R2>
+    Matrix<_Tp, R, R2> matmul(Matrix<_Tp, R2, C>& other) {
+        std::vector<stdx::fixed_size_simd<_Tp, R2>> vec;
+        for (int r1 = 0; r1 < R; r1++) { // R of ours
+            _Tp* res = new _Tp[R2];
+            for (int r2 = 0; r2 < R2; r2++) { // R of other
+                stdx::fixed_size_simd<_Tp, C> tmp = this->data[r1] * other.data[r2];
+                
+                res[r2] = _Tp();
+                for (std::size_t i = 0; i < tmp.size(); i++) {
+                    const auto& data = tmp[i];
+                    res[r2] += data;
+                }
+            }
+            stdx::fixed_size_simd<_Tp, R2> simd(res, stdx::element_aligned);
+            vec.push_back(simd);
+        }
+        return Matrix<_Tp, R, R2>(vec);
+    }
+};
+
 int main(int argc, char **argv) {
-    /*void *pool = malloc(sizeof(Data)+sizeof(Other));
-
-    *((Data*)pool) = Data { 100 };
-    *((Other*)(pool+sizeof(Data))) = Other { true };
-
-    std::cout << "Pool index of 0 for Data " << is_type((Data*)pool) <<
-    std::endl;
-    //std::cout << "Pool index of 0 for Other" << is_type((Other*)pool) <<
-    std::endl; std::cout << "Pool index of 1 for Other " <<
-    is_type((Other*)(pool+sizeof(Data))) << std::endl;
-    //std::cout << "Pool index of 1 for Data" <<
-    is_type((Data*)(pool+sizeof(Data))) << std::endl;
-
-    free(pool);*/
-
-    Data *pool = new Data[3];
-
-    Other *other_pool = new Other[4]+1;
-    for (int i = 0; i < 3; i++) {
-        other_pool[i] = Other{i, false};
-    }
-
-    for (int i = 0; i < 3; i++) {
-        pool[i] = Data{i};
-        std::cout << "Pool, index of " << i << " is: "
-                  << is_type<Data>(pool, &pool[i]) /*<< " " << &pool[i]*/
-                  << std::endl;
-    }
-    std::cout << "Pool, cmp to other: "
-              << is_type<Data>(pool, &other_pool[0]) /*<< " " << other_pool*/
-              << std::endl;
-    std::cout << "alignof(Data) " << sizeof(Data) << std::endl;
-    std::cout << "alignof(Other) " << sizeof(Other) << std::endl;
-
-    delete pool;
+    Matrix<int, 2, 3> a(1);
+    Matrix<int, 2, 3> b(2);
+    auto res = a.matmul(b);
+    res.print();
 }
