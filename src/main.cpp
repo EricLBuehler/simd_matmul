@@ -6,7 +6,7 @@ namespace stdx = std::experimental;
 template <typename _Tp, int R, int C>
 class Matrix {
     public:
-    std::vector<std::vector<_Tp>> data;
+    std::array<std::array<_Tp, C>, R> data;
 
     Matrix(_Tp value) {
         std::vector<std::vector<_Tp>> vec;
@@ -17,21 +17,19 @@ class Matrix {
     }
 
     Matrix(_Tp* inc_value) {
-        std::vector<std::vector<_Tp>> vec;
+        std::array<std::array<_Tp, C>, R> data;
         _Tp acc{};
         for (int r = 0; r < R; r++) {
-            std::vector<_Tp> inner;
             for (int c = 0; c < C; c++) {
                 acc += *inc_value;
-                inner.push_back(acc);
+                data[r][c] = acc;
             }
-            vec.push_back(inner);
         }
-        this->data = vec;
+        this->data = data;
     }
 
-    Matrix(std::vector<std::vector<_Tp>> vec) {
-        this->data = vec;
+    Matrix(std::array<std::array<_Tp, C>, R> data) {
+        this->data = data;
     }
 
     void print() const {
@@ -47,7 +45,7 @@ class Matrix {
     template <int _R, int _C>
     static Matrix<_Tp, _C, _R> transpose(const Matrix<_Tp, _R, _C>& matrix) {
         // Do the transpose
-        std::vector<std::vector<_Tp>> transpose(_C, std::vector<int>(_R));
+        std::array<std::array<_Tp, _R>, _C> transpose;
 
         int rows = matrix.data.size();
         int cols = matrix.data[0].size();
@@ -69,36 +67,58 @@ class Matrix {
 
     template <int R2>
     Matrix<_Tp, R, R2> matmul_pre_T(const Matrix<_Tp, R2, C>& other_T) {
-        std::vector<std::vector<_Tp>> vec;
+        std::array<std::array<_Tp, R2>, R> arr;
         for (int r1 = 0; r1 < R; r1++) { // R of ours
-            _Tp* res = new _Tp[R2];
             for (int r2 = 0; r2 < R2; r2++) { // R of other
                 // Do the mul here
                 stdx::fixed_size_simd<_Tp, C> tmp = stdx::fixed_size_simd<_Tp, C>(this->data[r1].data(), stdx::element_aligned) * stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(), stdx::element_aligned);
                 
                 /// Sum
-                res[r2] = _Tp(); // Default
+                _Tp acc{}; // Default
                 for (std::size_t i = 0; i < tmp.size(); i++) {
                     const auto& data = tmp[i];
-                    res[r2] += data;
+                    acc += data;
                 }
+                arr[r1][r2] = acc;
             }
-            vec.push_back(std::vector<_Tp>(res, res+R2));
         }
-        return Matrix<_Tp, R, R2>(vec);
+        return Matrix<_Tp, R, R2>(arr);
     }
 };
 
+template<size_t R, size_t C, size_t K>
+std::array<std::array<int, K>, R> multiplyMatrices(
+    const std::array<std::array<int, C>, R>& mat1,
+    const std::array<std::array<int, K>, C>& mat2) {
+    std::array<std::array<int, K>, R> result;
+
+    for (size_t i = 0; i < R; ++i) {
+        for (size_t j = 0; j < K; ++j) {
+            int sum = 0;
+            for (size_t k = 0; k < C; ++k) {
+                sum += mat1[i][k] * mat2[k][j];
+            }
+            result[i][j] = sum;
+        }
+    }
+
+    return result;
+}
+
 int main(int argc, char **argv) {
     int inc_val = 1;
-    Matrix<int, 2, 3> a(&inc_val);
-    std::cout<<"A:"<<std::endl;
+    Matrix<int, 2000, 3> a(&inc_val);
+    /*std::cout<<"A:"<<std::endl;
     a.print();
-    std::cout<<std::endl;
-    Matrix<int, 4, 3> b(&inc_val);
-    std::cout<<"B:"<<std::endl;
+    std::cout<<std::endl;*/
+    Matrix<int, 40, 3> b(&inc_val);
+    /*std::cout<<"B:"<<std::endl;
     b.print();
-    std::cout<<std::endl;
+    std::cout<<std::endl;*/
     auto res = a.matmul_pre_T(b);
-    res.print();
+    //res.print();
+
+    /*std::array<std::array<int, 3>, 2000> mat1;
+    std::array<std::array<int, 40>, 3> mat2;
+    auto res2 = multiplyMatrices(mat1, mat2);*/
 }
