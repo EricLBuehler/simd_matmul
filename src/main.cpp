@@ -115,25 +115,35 @@ std::array<std::array<int, K>, R> multiplyMatrices(
 int main(int argc, char** argv) {
     Matrix<int, 2000, 3> a;
     Matrix<int, 40, 3> b;
-    auto start = std::chrono::high_resolution_clock::now();
 
-    auto res = a.matmul_pre_T(b);
+    int64_t total_time=0;
+    for (int i=0; i<1000; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "SIMDATMUL Execution time: " << duration.count()
+        auto res = a.matmul_pre_T(b);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        total_time += duration.count();
+    }
+    std::cout << "SIMDATMUL Execution time: " << total_time/1000
               << " microseconds" << std::endl;
 
     std::array<std::array<int, 3>, 2000> mat1;
     std::array<std::array<int, 40>, 3> mat2;
-    auto start2 = std::chrono::high_resolution_clock::now();
 
-    auto res2 = multiplyMatrices(mat1, mat2);
+    int64_t total_time2=0;
+    for (int i=0; i<1000; i++) {
+        auto start2 = std::chrono::high_resolution_clock::now();
 
-    auto end2 = std::chrono::high_resolution_clock::now();
-    auto duration2 =
-        std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
-    std::cout << "Normal Execution time: " << duration2.count()
+        auto res2 = multiplyMatrices(mat1, mat2);
+
+        auto end2 = std::chrono::high_resolution_clock::now();
+        auto duration2 =
+            std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+        total_time2 += duration2.count();
+    }
+    std::cout << "Normal Execution time: " << total_time2/1000
               << " microseconds" << std::endl;
 }
