@@ -1,12 +1,12 @@
-#include <iostream>
-#include <experimental/simd>
 #include <chrono>
+#include <experimental/simd>
+#include <iostream>
 
 namespace stdx = std::experimental;
 
 template <typename _Tp, int R, int C>
 class Matrix {
-    public:
+   public:
     std::array<std::array<_Tp, C>, R> data;
 
     Matrix() {
@@ -34,20 +34,17 @@ class Matrix {
         this->data = arr;
     }
 
-    Matrix(std::array<std::array<_Tp, C>, R> data) {
-        this->data = data;
-    }
+    Matrix(std::array<std::array<_Tp, C>, R> data) { this->data = data; }
 
     void print() const {
-        for (auto row: this->data) {
+        for (auto row : this->data) {
             for (size_t i = 0; i < row.size(); i++) {
-                std::cout<<row[i]<<" ";
+                std::cout << row[i] << " ";
             }
-            std::cout<<std::endl;
+            std::cout << std::endl;
         }
     }
 
-    
     template <int _R, int _C>
     static Matrix<_Tp, _C, _R> transpose(const Matrix<_Tp, _R, _C>& matrix) {
         // Do the transpose
@@ -74,13 +71,17 @@ class Matrix {
     template <int R2>
     Matrix<_Tp, R, R2> matmul_pre_T(const Matrix<_Tp, R2, C>& other_T) {
         std::array<std::array<_Tp, R2>, R> arr;
-        for (int r1 = 0; r1 < R; r1++) { // R of ours
-            for (int r2 = 0; r2 < R2; r2++) { // R of other
+        for (int r1 = 0; r1 < R; r1++) {       // R of ours
+            for (int r2 = 0; r2 < R2; r2++) {  // R of other
                 // Do the mul here
-                stdx::fixed_size_simd<_Tp, C> tmp = stdx::fixed_size_simd<_Tp, C>(this->data[r1].data(), stdx::element_aligned) * stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(), stdx::element_aligned);
-                
+                stdx::fixed_size_simd<_Tp, C> tmp =
+                    stdx::fixed_size_simd<_Tp, C>(this->data[r1].data(),
+                                                  stdx::element_aligned) *
+                    stdx::fixed_size_simd<_Tp, C>(other_T.data[r2].data(),
+                                                  stdx::element_aligned);
+
                 /// Sum
-                _Tp acc{}; // Default
+                _Tp acc{};  // Default
                 for (std::size_t i = 0; i < tmp.size(); i++) {
                     const auto& data = tmp[i];
                     acc += data;
@@ -92,7 +93,7 @@ class Matrix {
     }
 };
 
-template<size_t R, size_t C, size_t K>
+template <size_t R, size_t C, size_t K>
 std::array<std::array<int, K>, R> multiplyMatrices(
     const std::array<std::array<int, C>, R>& mat1,
     const std::array<std::array<int, K>, C>& mat2) {
@@ -111,24 +112,28 @@ std::array<std::array<int, K>, R> multiplyMatrices(
     return result;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
     Matrix<int, 2000, 3> a;
     Matrix<int, 40, 3> b;
     auto res = a.matmul_pre_T(b);
-    
+
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "SIMDATMUL Execution time: " << duration.count() << " microseconds" << std::endl;
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "SIMDATMUL Execution time: " << duration.count()
+              << " microseconds" << std::endl;
 
     auto start2 = std::chrono::high_resolution_clock::now();
 
     std::array<std::array<int, 3>, 2000> mat1;
     std::array<std::array<int, 40>, 3> mat2;
     auto res2 = multiplyMatrices(mat1, mat2);
-    
+
     auto end2 = std::chrono::high_resolution_clock::now();
-    auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
-    std::cout << "Normal Execution time: " << duration2.count() << " microseconds" << std::endl;
+    auto duration2 =
+        std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    std::cout << "Normal Execution time: " << duration2.count()
+              << " microseconds" << std::endl;
 }
