@@ -10,8 +10,8 @@ class Matrix {
     std::array<std::array<_Tp, C>, R> data;
 
     Matrix() {
-        std::array<std::array<_Tp, C>, R> data;
-        this->data = data;
+        std::array<std::array<_Tp, C>, R> arr{};
+        this->data = arr;
     }
 
     Matrix(_Tp value) {
@@ -23,15 +23,15 @@ class Matrix {
     }
 
     Matrix(_Tp* inc_value) {
-        std::array<std::array<_Tp, C>, R> data;
+        std::array<std::array<_Tp, C>, R> arr;
         _Tp acc{};
         for (int r = 0; r < R; r++) {
             for (int c = 0; c < C; c++) {
                 acc += *inc_value;
-                data[r][c] = acc;
+                arr[r][c] = acc;
             }
         }
-        this->data = data;
+        this->data = arr;
     }
 
     Matrix(std::array<std::array<_Tp, C>, R> data) {
