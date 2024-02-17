@@ -12,4 +12,6 @@ endif()
 
 include_directories(numcpp "/home/ericbuehler/NumCpp/include")
 
+include_directories(matrix "./include/")
+
 add_executable(simd_matmul src/main.cpp)

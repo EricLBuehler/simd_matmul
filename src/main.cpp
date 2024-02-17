@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "NumCpp.hpp"
-#include "matrix.cpp"
+#include "matrix.hpp"
 
 template <size_t R, size_t C, size_t K>
 std::unique_ptr<std::array<std::array<int, K>, R>> multiplyMatrices(
@@ -73,11 +73,12 @@ int main(int argc, char** argv) {
     std::cout << "Normal Execution time: " << avg2 << " microseconds"
               << std::endl;
 
-    std::cout << 1.0 - (avg1 / avg2)
-              << "% faster than Normal" << std::endl;
+    std::cout << 1.0 - (avg1 / avg2) << "% faster than Normal" << std::endl;
 
-    nc::NdArray<int> nc1 = nc::zeros<int>(static_cast<nc::uint32>(ROWS), static_cast<nc::uint32>(WIDTH));
-    nc::NdArray<int> nc2 = nc::zeros<int>(static_cast<nc::uint32>(WIDTH), static_cast<nc::uint32>(COLS));
+    nc::NdArray<int> nc1 = nc::zeros<int>(static_cast<nc::uint32>(ROWS),
+                                          static_cast<nc::uint32>(WIDTH));
+    nc::NdArray<int> nc2 = nc::zeros<int>(static_cast<nc::uint32>(WIDTH),
+                                          static_cast<nc::uint32>(COLS));
 
     int64_t total_time3 = 0;
     for (int i = 0; i < TIMES; i++) {
@@ -96,10 +97,10 @@ int main(int argc, char** argv) {
     std::cout << "NumCpp Execution time: " << avg3 << " microseconds"
               << std::endl;
 
-    std::cout << 1.0 - (avg1 / avg3)
-              << "% faster than NumCpp" << std::endl;
+    std::cout << 1.0 - (avg1 / avg3) << "% faster than NumCpp" << std::endl;
 
-    // python3 -m timeit -c "import numpy;a=numpy.zeros([1000,16]);b=numpy.zeros([16,1000]);a@b"
+    // python3 -m timeit -c "import
+    // numpy;a=numpy.zeros([1000,16]);b=numpy.zeros([16,1000]);a@b"
 
     delete mat1;
     delete mat2;
