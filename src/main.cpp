@@ -1,6 +1,7 @@
 #include <chrono>
 #include <experimental/simd>
 #include <iostream>
+
 #include "NumCpp.hpp"
 
 namespace stdx = std::experimental;
@@ -117,11 +118,14 @@ class Matrix {
     }
 
     template <size_t R2>
-    void matmul_pre_T(const Matrix<_Tp, R2, C>& other_T,
-                      std::array<std::array<_Tp, R2>, R>* out) {
+    std::unique_ptr<std::array<std::array<_Tp, R2>, R>> matmul_pre_T(
+        const Matrix<_Tp, R2, C>& other_T) {
+        std::unique_ptr<std::array<std::array<_Tp, R2>, R>> out =
+            std::make_unique<std::array<std::array<_Tp, R2>, R>>();
         for (size_t r1 = 0; r1 < R; r1++) {       // R of ours
             for (size_t r2 = 0; r2 < R2; r2++) {  // R of other
-                stdx::fixed_size_simd<_Tp, C> prod = (*this->data)[r1] * (*other_T.data)[r2];
+                stdx::fixed_size_simd<_Tp, C> prod =
+                    (*this->data)[r1] * (*other_T.data)[r2];
                 _Tp sum{};
                 for (size_t i = 0; i < prod.size(); i++) {
                     sum += prod[i];
@@ -129,6 +133,7 @@ class Matrix {
                 (*out)[r1][r2] = sum;
             }
         }
+        return out;
     }
 
     void print() const {
@@ -144,9 +149,11 @@ class Matrix {
 };
 
 template <size_t R, size_t C, size_t K>
-void multiplyMatrices(const std::array<std::array<int, C>, R>* mat1,
-                      const std::array<std::array<int, K>, C>* mat2,
-                      std::array<std::array<int, K>, R>* out) {
+std::unique_ptr<std::array<std::array<int, K>, R>> multiplyMatrices(
+    const std::array<std::array<int, C>, R>* mat1,
+    const std::array<std::array<int, K>, C>* mat2) {
+    std::unique_ptr<std::array<std::array<int, K>, R>> out =
+        std::make_unique<std::array<std::array<int, K>, R>>();
     for (size_t i = 0; i < R; ++i) {
         for (size_t j = 0; j < K; ++j) {
             int sum = 0;
@@ -156,6 +163,7 @@ void multiplyMatrices(const std::array<std::array<int, C>, R>* mat1,
             (*out)[i][j] = sum;
         }
     }
+    return out;
 }
 
 int main(int argc, char** argv) {
@@ -170,15 +178,12 @@ int main(int argc, char** argv) {
     Matrix<int, ROWS, WIDTH> a(a_slow);
     Matrix<int, COLS, WIDTH> b(b_slow);
 
-    std::array<std::array<int, ROWS>, COLS>* arr =
-        new std::array<std::array<int, ROWS>, COLS>{};
-
     int64_t total_time = 0;
     for (int i = 0; i < TIMES; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         for (int j = 0; j < MUTLIPLIER; j++) {
-            a.matmul_pre_T(b, arr);
+            a.matmul_pre_T(b);
         }
 
         auto end = std::chrono::high_resolution_clock::now();
@@ -187,8 +192,8 @@ int main(int argc, char** argv) {
         total_time += duration.count();
     }
     int64_t avg1 = total_time / TIMES;
-    std::cout << "SIMDATMUL Execution time: " << avg1
-              << " microseconds" << std::endl;
+    std::cout << "SIMDATMUL Execution time: " << avg1 << " microseconds"
+              << std::endl;
 
     std::array<std::array<int, WIDTH>, ROWS>* mat1 =
         new std::array<std::array<int, WIDTH>, ROWS>{};
@@ -200,7 +205,7 @@ int main(int argc, char** argv) {
         auto start2 = std::chrono::high_resolution_clock::now();
 
         for (int j = 0; j < MUTLIPLIER; j++) {
-            multiplyMatrices(mat1, mat2, arr);
+            multiplyMatrices(mat1, mat2);
         }
 
         auto end2 = std::chrono::high_resolution_clock::now();
@@ -209,10 +214,11 @@ int main(int argc, char** argv) {
         total_time2 += duration2.count();
     }
     int64_t avg2 = total_time2 / TIMES;
-    std::cout << "Normal Execution time: " << avg2
-              << " microseconds" << std::endl;
-    
-    std::cout << 1.0 - (((double)avg1) / ((double)avg2)) << "% faster" << std::endl;
+    std::cout << "Normal Execution time: " << avg2 << " microseconds"
+              << std::endl;
+
+    std::cout << 1.0 - (((double)avg1) / ((double)avg2))
+              << "% faster than Normal" << std::endl;
 
     nc::NdArray<int> nc1 = nc::zeros<int>((nc::uint32)ROWS, (nc::uint32)WIDTH);
     nc::NdArray<int> nc2 = nc::zeros<int>((nc::uint32)WIDTH, (nc::uint32)COLS);
@@ -231,8 +237,11 @@ int main(int argc, char** argv) {
         total_time3 += duration3.count();
     }
     int64_t avg3 = total_time3 / TIMES;
-    std::cout << "NumCpp Execution time: " << avg3
-              << " microseconds" << std::endl;
+    std::cout << "NumCpp Execution time: " << avg3 << " microseconds"
+              << std::endl;
+
+    std::cout << 1.0 - (((double)avg1) / ((double)avg3))
+              << "% faster than NumCpp" << std::endl;
 
     delete mat1;
     delete mat2;
