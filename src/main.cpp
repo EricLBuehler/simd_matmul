@@ -158,11 +158,11 @@ void multiplyMatrices(const std::array<std::array<int, C>, R>* mat1,
 }
 
 int main(int argc, char** argv) {
-    constexpr int ROWS = 16;
-    constexpr int COLS = 16;
+    constexpr int ROWS = 1000;
+    constexpr int COLS = 1000;
     constexpr int WIDTH = 16;
     constexpr int TIMES = 10;
-    constexpr int MUTLIPLIER = 10000;
+    constexpr int MUTLIPLIER = 10;
 
     SlowMatrix<int, ROWS, WIDTH> a_slow;
     SlowMatrix<int, COLS, WIDTH> b_slow;
