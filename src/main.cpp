@@ -157,7 +157,8 @@ int main(int argc, char** argv) {
     constexpr int ROWS = 10;
     constexpr int COLS = 10;
     constexpr int WIDTH = 16;
-    constexpr int TIMES = 1;
+    constexpr int TIMES = 10;
+    constexpr int MUTLIPLIER = 10000;
 
     SlowMatrix<int, ROWS, WIDTH> a_slow;
     SlowMatrix<int, COLS, WIDTH> b_slow;
@@ -171,7 +172,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < TIMES; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        for (int j = 0; j < 1000000; j++) {
+        for (int j = 0; j < MUTLIPLIER; j++) {
             a.matmul_pre_T(b, arr);
         }
 
@@ -180,7 +181,8 @@ int main(int argc, char** argv) {
             std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         total_time += duration.count();
     }
-    std::cout << "SIMDATMUL Execution time: " << total_time / TIMES
+    int64_t avg1 = total_time / TIMES;
+    std::cout << "SIMDATMUL Execution time: " << avg1
               << " microseconds" << std::endl;
 
     std::array<std::array<int, WIDTH>, ROWS>* mat1 =
@@ -192,7 +194,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < TIMES; i++) {
         auto start2 = std::chrono::high_resolution_clock::now();
 
-        for (int j = 0; j < 1000000; j++) {
+        for (int j = 0; j < MUTLIPLIER; j++) {
             multiplyMatrices(mat1, mat2, arr);
         }
 
@@ -201,8 +203,11 @@ int main(int argc, char** argv) {
             end2 - start2);
         total_time2 += duration2.count();
     }
-    std::cout << "Normal Execution time: " << total_time2 / TIMES
+    int64_t avg2 = total_time2 / TIMES;
+    std::cout << "Normal Execution time: " << avg2
               << " microseconds" << std::endl;
+    
+    std::cout << 1.0 - (((double)avg1) / ((double)avg2)) << "% faster" << std::endl;
 
     delete mat1;
     delete mat2;
