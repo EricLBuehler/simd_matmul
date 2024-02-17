@@ -243,6 +243,8 @@ int main(int argc, char** argv) {
     std::cout << 1.0 - (((double)avg1) / ((double)avg3))
               << "% faster than NumCpp" << std::endl;
 
+    // python3 -m timeit -c "import numpy;a=numpy.zeros([1000,16]);b=numpy.zeros([16,1000]);a@b"
+
     delete mat1;
     delete mat2;
 }
