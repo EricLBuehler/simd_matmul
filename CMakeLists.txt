@@ -10,4 +10,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "DBG")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG")
 endif()
 
+include_directories(numcpp "/home/ericbuehler/NumCpp/include")
+
 add_executable(simd_matmul src/main.cpp)

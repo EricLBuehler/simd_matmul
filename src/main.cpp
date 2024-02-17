@@ -1,6 +1,7 @@
 #include <chrono>
 #include <experimental/simd>
 #include <iostream>
+#include "NumCpp.hpp"
 
 namespace stdx = std::experimental;
 
@@ -212,6 +213,26 @@ int main(int argc, char** argv) {
               << " microseconds" << std::endl;
     
     std::cout << 1.0 - (((double)avg1) / ((double)avg2)) << "% faster" << std::endl;
+
+    nc::NdArray<int> nc1 = nc::zeros<int>((nc::uint32)ROWS, (nc::uint32)WIDTH);
+    nc::NdArray<int> nc2 = nc::zeros<int>((nc::uint32)WIDTH, (nc::uint32)COLS);
+
+    int64_t total_time3 = 0;
+    for (int i = 0; i < TIMES; i++) {
+        auto start3 = std::chrono::high_resolution_clock::now();
+
+        for (int j = 0; j < MUTLIPLIER; j++) {
+            nc::matmul(nc1, nc2);
+        }
+
+        auto end3 = std::chrono::high_resolution_clock::now();
+        auto duration3 = std::chrono::duration_cast<std::chrono::microseconds>(
+            end3 - start3);
+        total_time3 += duration3.count();
+    }
+    int64_t avg3 = total_time3 / TIMES;
+    std::cout << "NumCpp Execution time: " << avg3
+              << " microseconds" << std::endl;
 
     delete mat1;
     delete mat2;
