@@ -100,7 +100,7 @@ class SlowMatrix {
 template <typename _Tp, size_t R, size_t C>
 class Matrix {
    public:
-    std::array<stdx::fixed_size_simd<_Tp, C>, R>* data;
+    const std::array<stdx::fixed_size_simd<_Tp, C>, R>* data;
 
     Matrix(SlowMatrix<_Tp, R, C>& from) {
         std::array<stdx::fixed_size_simd<_Tp, C>, R>* arr =
@@ -120,8 +120,12 @@ class Matrix {
                       std::array<std::array<_Tp, R2>, R>* out) {
         for (size_t r1 = 0; r1 < R; r1++) {       // R of ours
             for (size_t r2 = 0; r2 < R2; r2++) {  // R of other
-                (*out)[r1][r2] = stdx::parallelism_v2::reduce(
-                    (*this->data)[r1] * (*other_T.data)[r2], std::plus<>());
+                stdx::fixed_size_simd<_Tp, C> prod = (*this->data)[r1] * (*other_T.data)[r2];
+                _Tp sum{};
+                for (size_t i = 0; i < prod.size(); i++) {
+                    sum += prod[i];
+                }
+                (*out)[r1][r2] = sum;
             }
         }
     }
