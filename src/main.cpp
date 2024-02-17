@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
             std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         total_time += duration.count();
     }
-    int64_t avg1 = total_time / TIMES;
+    double avg1 = total_time / TIMES;
     std::cout << "SIMDATMUL Execution time: " << avg1 << " microseconds"
               << std::endl;
 
@@ -69,15 +69,15 @@ int main(int argc, char** argv) {
             end2 - start2);
         total_time2 += duration2.count();
     }
-    int64_t avg2 = total_time2 / TIMES;
+    double avg2 = total_time2 / TIMES;
     std::cout << "Normal Execution time: " << avg2 << " microseconds"
               << std::endl;
 
-    std::cout << 1.0 - (((double)avg1) / ((double)avg2))
+    std::cout << 1.0 - (avg1 / avg2)
               << "% faster than Normal" << std::endl;
 
-    nc::NdArray<int> nc1 = nc::zeros<int>((nc::uint32)ROWS, (nc::uint32)WIDTH);
-    nc::NdArray<int> nc2 = nc::zeros<int>((nc::uint32)WIDTH, (nc::uint32)COLS);
+    nc::NdArray<int> nc1 = nc::zeros<int>(static_cast<nc::uint32>(ROWS), static_cast<nc::uint32>(WIDTH));
+    nc::NdArray<int> nc2 = nc::zeros<int>(static_cast<nc::uint32>(WIDTH), static_cast<nc::uint32>(COLS));
 
     int64_t total_time3 = 0;
     for (int i = 0; i < TIMES; i++) {
@@ -92,11 +92,11 @@ int main(int argc, char** argv) {
             end3 - start3);
         total_time3 += duration3.count();
     }
-    int64_t avg3 = total_time3 / TIMES;
+    double avg3 = total_time3 / TIMES;
     std::cout << "NumCpp Execution time: " << avg3 << " microseconds"
               << std::endl;
 
-    std::cout << 1.0 - (((double)avg1) / ((double)avg3))
+    std::cout << 1.0 - (avg1 / avg3)
               << "% faster than NumCpp" << std::endl;
 
     // python3 -m timeit -c "import numpy;a=numpy.zeros([1000,16]);b=numpy.zeros([16,1000]);a@b"
