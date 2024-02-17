@@ -154,8 +154,8 @@ void multiplyMatrices(const std::array<std::array<int, C>, R>* mat1,
 }
 
 int main(int argc, char** argv) {
-    constexpr int ROWS = 10;
-    constexpr int COLS = 10;
+    constexpr int ROWS = 16;
+    constexpr int COLS = 16;
     constexpr int WIDTH = 16;
     constexpr int TIMES = 10;
     constexpr int MUTLIPLIER = 10000;
