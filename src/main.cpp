@@ -29,8 +29,8 @@ int main(int argc, char** argv) {
     constexpr int TIMES = 100;
     constexpr int MUTLIPLIER = 1;
 
-    SlowMatrix<int, ROWS, WIDTH> a_slow;
-    SlowMatrix<int, COLS, WIDTH> b_slow;
+    SlowMatrix<int, ROWS, WIDTH> a_slow(5);
+    SlowMatrix<int, COLS, WIDTH> b_slow(7);
     Matrix<int, ROWS, WIDTH> a(a_slow);
     Matrix<int, COLS, WIDTH> b(b_slow);
 

@@ -14,22 +14,24 @@ class SlowMatrix {
     }
 
     SlowMatrix(_Tp value) {
-        std::vector<std::vector<_Tp>>* vec =
-            new std::vector<std::vector<_Tp>>{};
-        for (int r = 0; r < R; r++) {
-            vec.push_back(std::vector(C, value));
+        std::array<std::array<_Tp, C>, R>* arr =
+            new std::array<std::array<_Tp, C>, R>{};
+        for (size_t r = 0; r < R; r++) {
+            for (size_t c = 0; c < C; c++) {
+                (*arr)[r][c] = value;
+            }
         }
-        this->data = vec;
+        this->data = arr;
     }
 
     SlowMatrix(_Tp* inc_value) {
         std::array<std::array<_Tp, C>, R>* arr =
             new std::array<std::array<_Tp, C>, R>{};
         _Tp acc{};
-        for (int r = 0; r < R; r++) {
-            for (int c = 0; c < C; c++) {
+        for (size_t r = 0; r < R; r++) {
+            for (size_t c = 0; c < C; c++) {
                 acc += *inc_value;
-                arr[r][c] = acc;
+                (*arr)[r][c] = acc;
             }
         }
         this->data = arr;
@@ -99,6 +101,8 @@ template <typename _Tp, size_t R, size_t C>
 class Matrix {
    public:
     const std::array<stdx::fixed_size_simd<_Tp, C>, R>* data;
+    
+    Matrix() = delete;
 
     Matrix(SlowMatrix<_Tp, R, C>& from) {
         std::array<stdx::fixed_size_simd<_Tp, C>, R>* arr =
